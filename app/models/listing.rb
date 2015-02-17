@@ -30,6 +30,7 @@
 #  category_id              :integer
 #  share_type_id            :integer
 #  transaction_type_id      :integer
+#  listing_shape_id         :integer
 #  organization_id          :integer
 #  price_cents              :integer
 #  currency                 :string(255)
