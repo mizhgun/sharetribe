@@ -79,6 +79,7 @@ class Listing < ActiveRecord::Base
 
   belongs_to :category
   belongs_to :transaction_type
+  belongs_to :listing_shape
 
   delegate :direction, to: :transaction_type
   delegate :status_after_reply, to: :transaction_type
