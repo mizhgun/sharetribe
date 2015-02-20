@@ -142,7 +142,7 @@ class ListingsController < ApplicationController
       @custom_field_questions = @listing.category.custom_fields
       @numeric_field_ids = numeric_field_ids(@custom_field_questions)
 
-      @listing.transaction_type = @current_community.transaction_types.find(params[:transaction_type])
+      @listing.listing_shape = @current_community.listing_shapes.find(params[:listing_shape])
       logger.info "Category: #{@listing.category.inspect}"
 
       payment_type = MarketplaceService::Community::Query.payment_type(@current_community.id)
@@ -169,10 +169,10 @@ class ListingsController < ApplicationController
 
     params[:listing] = normalize_price_param(params[:listing]);
 
-    transaction_type_id = params[:listing][:transaction_type_id]
-    listing_shape = Maybe(@current_community.listing_shapes.where(transaction_type_id: transaction_type_id).first).or_else(nil)
+    listing_shape_id = params[:listing][:listing_shape_id]
+    listing_shape = @current_community.listing_shapes.where(id: listing_shape_id).first
 
-    @listing = Listing.new(params[:listing].merge({listing_shape_id: listing_shape.id}))
+    @listing = Listing.new(params[:listing].merge({transaction_type_id: listing_shape.transaction_type_id}))
 
     @listing.author = @current_user
     @listing.custom_field_values = create_field_values(params[:custom_fields])

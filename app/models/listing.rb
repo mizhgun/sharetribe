@@ -198,7 +198,7 @@ class Listing < ActiveRecord::Base
     params ||= {}  # Set params to empty hash if it's nil
     joined_tables = []
 
-    params[:include] ||= [:listing_images, :category, :transaction_type]
+    params[:include] ||= [:listing_images, :category, :listing_shape]
 
     params.reject!{ |key,value| (value == "all" || value == ["all"]) && key != "status"} # all means the fliter doesn't need to be included (except with "status")
 
@@ -224,16 +224,22 @@ class Listing < ActiveRecord::Base
     # Share type is overriden by transaction_type if it is present
     if params[:share_type].present?
       direction = params[:share_type]
-      params[:transaction_types] = {:id => current_community.transaction_types.select { |transaction_type| transaction_type.direction == direction }.collect(&:id) }
+      author_is_seller = direction == 'request' ? false : true
+
+      listing_shape_ids = current_community.listing_shapes.select { |listing_shape|
+        listing_shape.author_is_seller == author_is_seller
+      }.collect(&:id)
+
+      params[:listing_shapes] = {id: listing_shape_ids }
     end
 
-    if params[:transaction_type].present?
+    if params[:listing_shape].present?
       # Sphinx expects integer
-      params[:transaction_types] = {:id => params[:transaction_type].to_i}
+      params[:listing_shapes] = {:id => params[:listing_shape].to_i}
     end
 
-    if params[:transaction_type].present? || params[:share_type].present?
-      joined_tables << :transaction_type
+    if params[:listing_shape].present? || params[:share_type].present?
+      joined_tables << :listing_shape
     end
 
     # Two ways of finding, with or without sphinx
@@ -256,7 +262,7 @@ class Listing < ActiveRecord::Base
       with[:community_ids] = current_community.id
 
       with[:category_id] = params[:categories][:id] if params[:categories].present?
-      with[:transaction_type_id] = params[:transaction_types][:id] if params[:transaction_types].present?
+      with[:listing_shape_id] = params[:listing_shapes][:id] if params[:listing_shapes].present?
       with[:listing_id] = params[:listing_id] if params[:listing_id].present?
       with[:price_cents] = params[:price_cents] if params[:price_cents].present?
 
@@ -304,7 +310,7 @@ class Listing < ActiveRecord::Base
   end
 
   def self.search_with_sphinx?(params)
-    params[:search].present? || params[:transaction_types].present? || params[:category].present? || params[:custom_dropdown_field_options].present?  || params[:custom_checkbox_field_options].present? || params[:price_cents].present?
+    params[:search].present? || params[:listing_shapes].present? || params[:category].present? || params[:custom_dropdown_field_options].present?  || params[:custom_checkbox_field_options].present? || params[:price_cents].present?
   end
 
   def self.find_by_category_and_subcategory(category)
