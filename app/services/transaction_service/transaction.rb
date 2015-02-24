@@ -131,15 +131,18 @@ module TransactionService::Transaction
   def create_tx_paypal(tx:, gateway_fields:, async:)
     # Note: Quantity may be confusing in Paypal Checkout page, thus, we don't use separated unit price and quantity,
     # only the total price.
-    total = tx[:unit_price] * tx[:listing_quantity]
+    order_total = tx[:unit_price] * tx[:listing_quantity] + tx[:shipping_total]
+    item_total = tx[:unit_price] * tx[:listing_quantity]
 
     create_payment_info = PaypalService::API::DataTypes.create_create_payment_request({
       transaction_id: tx[:id],
       item_name: tx[:listing_title],
       item_quantity: 1,
-      item_price: total,
       merchant_id: tx[:listing_author_id],
-      order_total: total,
+      no_shipping: tx[:no_shipping],
+      shipping_total: tx[:shipping_total],
+      order_total: order_total,
+      item_total: item_total,
       success: gateway_fields[:success_url],
       cancel: gateway_fields[:cancel_url],
       merchant_brand_logo_url: gateway_fields[:merchant_brand_logo_url]})
